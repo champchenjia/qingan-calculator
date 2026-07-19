@@ -3,341 +3,477 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>安居試算所 3.0 | 升級人性化版</title>
-    
-    <!-- 引入 Tailwind CSS 進行快速樣式開發 -->
+    <title>青安 3.0 購屋資金貸款試算</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- 引入 Vue 3 處理資料綁定與互動 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    
-    <!-- 引入 Chart.js 處理圖表 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- 引入 Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['"Noto Sans TC"', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: '#0d9488', // Teal 600
-                        secondary: '#f0fdfa', // Teal 50
-                    }
+                    fontFamily: { sans: ['"Noto Sans TC"', 'sans-serif'] },
+                    colors: { primary: '#0d9488', secondary: '#f0fdfa' }
                 }
             }
         }
     </script>
-
     <style>
-        body {
-            background-color: #f8fafc;
-            color: #334155;
-        }
-        
-        /* 客製化滑桿樣式 */
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background: #0d9488;
-            cursor: pointer;
-            margin-top: -8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            transition: transform 0.1s;
-        }
-        input[type=range]::-webkit-slider-thumb:hover {
-            transform: scale(1.1);
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 8px;
-            cursor: pointer;
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        input[type=range]:focus {
-            outline: none;
-        }
+        body { background-color: #f8fafc; color: #334155; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Slider */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #0d9488; cursor: pointer; margin-top: -6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.1s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: #cbd5e1; border-radius: 4px; }
+        input[type=range]:focus { outline: none; }
+        /* Toggle */
+        .toggle-checkbox:checked { right: 0; border-color: #0d9488; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #0d9488; }
     </style>
 </head>
 <body class="antialiased min-h-screen pb-20">
 
-    <div id="app" class="max-w-6xl mx-auto px-4 py-8">
+    <div id="app" class="max-w-7xl mx-auto px-4 py-8">
         
         <!-- Header -->
-        <header class="mb-10 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-4">
+        <header class="mb-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-200 pb-6">
             <div>
-                <h1 class="text-3xl font-black text-slate-800 tracking-tight">安居試算所 <span class="text-primary text-2xl">3.0</span></h1>
-                <p class="text-slate-500 mt-2 text-sm md:text-base">更直覺、無壓力的購屋財務規劃工具</p>
+                <div class="flex items-center justify-center md:justify-start gap-3 mb-2">
+                    <span class="bg-primary text-white text-xs font-bold px-2 py-1 rounded">2026 最新版</span>
+                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">青安 3.0 購屋貸款試算</h1>
+                </div>
+                <p class="text-slate-500 text-sm">一頁搞定：額度上限、鑑價八成、寬限期跳升、年繳明細與自備款估算</p>
             </div>
-            <div class="bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100 flex items-center gap-2 text-sm font-medium">
-                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                資料僅於本機計算，不回傳伺服器
+            <div class="flex gap-2">
+                <button @click="copyResults" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center gap-2">
+                    <i class="fa-solid" :class="copySuccess ? 'fa-check text-green-500' : 'fa-copy'"></i>
+                    {{ copySuccess ? '已複製結果！' : '複製試算結果' }}
+                </button>
             </div>
         </header>
 
-        <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <!-- Left Column: Inputs (Wizard style) -->
+            <!-- ====== 左側：輸入與設定 ====== -->
             <div class="lg:col-span-5 space-y-6">
                 
-                <!-- 房屋總價區塊 -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                    <div class="flex justify-between items-end mb-4">
-                        <label class="block text-lg font-bold text-slate-700">1. 想買多少錢的房子？</label>
-                        <span class="text-2xl font-black text-primary">{{ formatWan(housePrice) }} 萬</span>
+                <!-- 1. 資格檢查 -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-user-check text-primary"></i> 申請資格快速檢查
+                    </h2>
+                    <div class="space-y-3">
+                        <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition" :class="checkAge ? 'bg-teal-50 border-teal-200' : 'border-slate-200'">
+                            <input type="checkbox" v-model="checkAge" class="mt-1 w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded">
+                            <div class="text-sm"><strong class="block text-slate-700">年齡符合</strong><span class="text-slate-500">借款人已成年且未滿 50 歲</span></div>
+                        </label>
+                        <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition" :class="checkFirstTime ? 'bg-teal-50 border-teal-200' : 'border-slate-200'">
+                            <input type="checkbox" v-model="checkFirstTime" class="mt-1 w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded">
+                            <div class="text-sm"><strong class="block text-slate-700">無自有住宅</strong><span class="text-slate-500">本人、配偶及未成年子女名下皆無房產</span></div>
+                        </label>
+                        <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition" :class="checkIncome ? 'bg-teal-50 border-teal-200' : 'border-slate-200'">
+                            <input type="checkbox" v-model="checkIncome" class="mt-1 w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded">
+                            <div class="text-sm"><strong class="block text-slate-700">所得及總價門檻</strong><span class="text-slate-500">年所得200萬內，房屋總價(含鑑價)2000萬內</span></div>
+                        </label>
                     </div>
-                    <input type="range" v-model="housePrice" min="300" max="4000" step="10" class="w-full">
-                    <div class="flex justify-between text-xs text-slate-400 mt-2">
-                        <span>300萬</span>
-                        <span>4000萬</span>
+                    <div v-if="!isEligible" class="mt-3 text-xs text-red-500 bg-red-50 p-2 rounded">
+                        <i class="fa-solid fa-triangle-exclamation"></i> 提醒：您可能有部分條件未符合青安 3.0 資格，核貸結果以銀行為準。
                     </div>
                 </div>
 
-                <!-- 自備款區塊 -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                    <div class="flex justify-between items-end mb-4">
-                        <div>
-                            <label class="block text-lg font-bold text-slate-700">2. 手邊準備了多少自備款？</label>
-                            <p class="text-sm text-slate-500 mt-1">建議至少準備 2 成</p>
-                        </div>
-                        <span class="text-2xl font-black text-primary">{{ formatWan(downPayment) }} 萬</span>
-                    </div>
+                <!-- 2. 房屋與貸款基礎 -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-house-chimney text-primary"></i> 房屋總價與鑑價試算
+                    </h2>
                     
-                    <!-- 快速按鈕 -->
-                    <div class="flex gap-2 mb-4">
-                        <button @click="setDownPaymentRatio(0.2)" :class="downPaymentRatio === 0.2 ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600'" class="flex-1 py-2 rounded-lg text-sm font-bold transition">2 成</button>
-                        <button @click="setDownPaymentRatio(0.25)" :class="downPaymentRatio === 0.25 ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600'" class="flex-1 py-2 rounded-lg text-sm font-bold transition">2.5 成</button>
-                        <button @click="setDownPaymentRatio(0.3)" :class="downPaymentRatio === 0.3 ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600'" class="flex-1 py-2 rounded-lg text-sm font-bold transition">3 成</button>
-                    </div>
+                    <div class="space-y-5">
+                        <!-- 家庭資格 -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">適用家庭身份 (影響貸款上限)</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                <button v-for="type in familyTypes" :key="type.id" @click="familyStatus = type.id"
+                                    class="py-2 px-1 rounded-lg text-xs font-bold border transition text-center"
+                                    :class="familyStatus === type.id ? 'bg-primary text-white border-primary' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'">
+                                    {{ type.name }}<br><span class="opacity-80 font-normal">{{ type.limit }}萬</span>
+                                </button>
+                            </div>
+                        </div>
 
-                    <input type="range" v-model="downPayment" :min="housePrice * 0.1" :max="housePrice * 0.6" step="5" class="w-full">
-                    <div class="text-right text-xs text-slate-400 mt-2">目前佔比: {{ (downPayment / housePrice * 100).toFixed(1) }}%</div>
+                        <!-- 房屋總價 -->
+                        <div>
+                            <div class="flex justify-between items-end mb-1">
+                                <label class="block text-sm font-bold text-slate-700">房屋成交總價</label>
+                                <span class="text-xl font-black text-primary">{{ housePrice }} 萬</span>
+                            </div>
+                            <input type="range" v-model="housePrice" min="300" max="4000" step="10">
+                        </div>
+
+                        <!-- 房屋鑑價 -->
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-sm font-bold text-slate-700">銀行預估鑑價</label>
+                                <div class="flex items-center gap-2">
+                                    <button @click="appraisalValue = housePrice" class="text-[10px] bg-slate-200 px-2 py-1 rounded text-slate-600 hover:bg-slate-300">同總價</button>
+                                    <span class="text-lg font-black text-slate-700">{{ appraisalValue }} 萬</span>
+                                </div>
+                            </div>
+                            <input type="range" v-model="appraisalValue" min="300" max="4000" step="10">
+                            <p class="text-xs text-slate-500 mt-2">※ 銀行貸款最高 8 成，是以「成交價」與「鑑價」取<strong class="text-red-500">較低者</strong>計算。</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 貸款條件區塊 -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                    <label class="block text-lg font-bold text-slate-700 mb-4">3. 貸款條件設定</label>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <span class="block text-sm text-slate-500 mb-1">貸款年限</span>
-                            <select v-model="loanYears" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg py-2 px-3 focus:ring-2 focus:ring-primary focus:outline-none font-bold">
-                                <option value="20">20 年</option>
-                                <option value="30">30 年</option>
-                                <option value="40">40 年</option>
-                            </select>
-                        </div>
-                        <div>
-                            <span class="block text-sm text-slate-500 mb-1">寬限期 (只還利息)</span>
-                            <select v-model="graceYears" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg py-2 px-3 focus:ring-2 focus:ring-primary focus:outline-none font-bold">
-                                <option value="0">不需要</option>
-                                <option value="3">3 年</option>
-                                <option value="5">5 年</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+                <!-- 3. 資金與還款設定 -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-coins text-primary"></i> 資金需求與還款設定
+                    </h2>
 
-                <!-- 收入與負擔評估 -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                    <div class="flex justify-between items-end mb-4">
-                        <label class="block text-lg font-bold text-slate-700">4. 每月家庭總收入</label>
-                        <span class="text-xl font-black text-slate-700">{{ formatMoney(monthlyIncome * 10000) }} /月</span>
+                    <div class="space-y-5">
+                        <!-- 實際貸款額 -->
+                        <div>
+                            <div class="flex justify-between items-end mb-1">
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700">預計申請貸款額度</label>
+                                    <p class="text-[10px] text-primary">最高可貸: {{ maxLoanAmount }} 萬 (受限於{{ limitingFactor }})</p>
+                                </div>
+                                <span class="text-xl font-black text-slate-800">{{ actualLoan }} 萬</span>
+                            </div>
+                            <input type="range" v-model="actualLoan" min="0" :max="maxLoanAmount" step="10">
+                        </div>
+
+                        <!-- 周邊費用 -->
+                        <div>
+                            <div class="flex justify-between items-end mb-1">
+                                <label class="block text-sm font-bold text-slate-700">購屋周邊費用預估</label>
+                                <span class="text-base font-bold text-slate-600">{{ extraFees }} 萬</span>
+                            </div>
+                            <input type="range" v-model="extraFees" min="0" max="500" step="5">
+                            <p class="text-xs text-slate-400 mt-1">包含：契稅、代書費、仲介費、基本裝潢與家電等</p>
+                        </div>
+
+                        <hr class="border-slate-100">
+
+                        <!-- 貸款條件 -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1">貸款年限</label>
+                                <select v-model="loanYears" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm font-bold focus:ring-2 focus:ring-primary outline-none">
+                                    <option value="20">20 年</option>
+                                    <option value="30">30 年</option>
+                                    <option value="40">40 年 (青安上限)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1">寬限期</label>
+                                <select v-model="graceYears" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm font-bold focus:ring-2 focus:ring-primary outline-none">
+                                    <option value="0">無寬限期</option>
+                                    <option value="3">3 年</option>
+                                    <option value="5">5 年 (青安上限)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 家庭月收入 -->
+                        <div>
+                            <div class="flex justify-between items-end mb-1">
+                                <label class="block text-sm font-bold text-slate-700">家庭月收入</label>
+                                <span class="text-base font-bold text-slate-600">{{ monthlyIncome }} 萬</span>
+                            </div>
+                            <input type="range" v-model="monthlyIncome" min="3" max="30" step="0.5">
+                        </div>
                     </div>
-                    <input type="range" v-model="monthlyIncome" min="3" max="30" step="0.5" class="w-full">
-                    <p class="text-xs text-slate-400 mt-2">幫助我們為您評估還款壓力 (單位: 萬元)</p>
                 </div>
 
             </div>
 
-            <!-- Right Column: Results & Dashboard -->
+            <!-- ====== 右側：結果與明細 ====== -->
             <div class="lg:col-span-7 space-y-6">
                 
-                <!-- 核心數字看板 -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-center">
-                        <span class="text-slate-500 font-medium mb-1">預估貸款總額</span>
-                        <div class="text-3xl lg:text-4xl font-black text-slate-800">
-                            {{ formatWan(loanAmount) }} <span class="text-lg font-medium text-slate-500">萬</span>
+                <!-- 核心數字 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 自備款卡片 -->
+                    <div class="bg-white border-l-4 border-slate-800 rounded-xl p-5 shadow-sm">
+                        <div class="text-slate-500 text-sm font-bold mb-1">預估總現金需求 (自備款+周邊)</div>
+                        <div class="text-3xl font-black text-slate-800">{{ totalCashNeeded }} <span class="text-lg">萬</span></div>
+                        <div class="mt-2 text-xs text-slate-400">
+                            公式: 總價({{housePrice}}) - 貸款({{actualLoan}}) + 周邊({{extraFees}})
                         </div>
-                        <span v-if="loanAmount > 1000" class="text-xs text-red-500 mt-2 bg-red-50 inline-block px-2 py-1 rounded">超過青安 1,000 萬額度，超額部分以一般利率計</span>
                     </div>
                     
-                    <div class="bg-primary rounded-2xl p-6 shadow-md text-white flex flex-col justify-center relative overflow-hidden">
-                        <!-- 背景裝飾 -->
-                        <div class="absolute -right-10 -top-10 w-32 h-32 bg-white opacity-10 rounded-full"></div>
+                    <!-- 月付金卡片 (寬限期後) -->
+                    <div class="bg-gradient-to-br from-teal-500 to-primary border-l-4 border-teal-700 rounded-xl p-5 shadow-md text-white relative overflow-hidden">
+                        <div class="absolute right-[-20px] top-[-20px] opacity-10 text-9xl"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                         <div class="relative z-10">
-                            <span class="text-teal-100 font-medium mb-1">寬限期後 首月月付</span>
-                            <div class="text-3xl lg:text-4xl font-black">
-                                {{ formatMoney(maxMonthlyPayment) }}
+                            <div class="text-teal-100 text-sm font-bold mb-1">
+                                {{ graceYears > 0 ? `寬限期後首月繳款 (第${graceYears+1}年)` : '首月繳款金額' }}
                             </div>
-                            <div class="mt-2 text-sm text-teal-100 flex items-center gap-1">
-                                <span v-if="graceYears > 0">寬限期內每月僅需: {{ formatMoney(gracePayment) }}</span>
-                                <span v-else>無寬限期，首月開始本息攤還</span>
+                            <div class="text-3xl font-black">{{ formatMoney(maxMonthlyPayment) }}</div>
+                            <div class="mt-2 text-xs text-teal-100 flex items-center gap-1">
+                                <span v-if="graceYears > 0"><i class="fa-solid fa-info-circle"></i> 寬限期內月繳約 {{ formatMoney(gracePayment) }}</span>
+                                <span v-else>本息平均攤還，依各年度利率浮動</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 負擔診斷小卡 -->
-                <div :class="dtiCard.bgClass" class="rounded-2xl p-4 flex items-start gap-4 transition-colors duration-300 border border-transparent" :style="dtiCard.borderStyle">
-                    <div class="text-3xl mt-1">{{ dtiCard.icon }}</div>
-                    <div>
-                        <h4 class="font-bold text-lg" :class="dtiCard.titleClass">收支比：{{ dtiPercent }}% - {{ dtiCard.title }}</h4>
-                        <p class="text-sm mt-1" :class="dtiCard.descClass">{{ dtiCard.desc }}</p>
+                <!-- 跳升提醒與收支比 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 跳升提醒 -->
+                    <div v-if="graceYears > 0" class="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3">
+                        <div class="text-red-500 mt-1"><i class="fa-solid fa-bell fa-shake"></i></div>
+                        <div>
+                            <div class="font-bold text-red-800 text-sm">寬限期結束跳升提醒</div>
+                            <div class="text-xs text-red-600 mt-1">
+                                第 {{ graceYears + 1 }} 年起，每月負擔將增加 <strong class="text-base">{{ formatMoney(paymentJumpAmount) }}</strong>！請預先做好財務準備。
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="bg-slate-50 border border-slate-100 rounded-xl p-4 flex gap-3">
+                        <div class="text-slate-400 mt-1"><i class="fa-solid fa-thumbs-up"></i></div>
+                        <div>
+                            <div class="font-bold text-slate-700 text-sm">無寬限期方案</div>
+                            <div class="text-xs text-slate-500 mt-1">強迫儲蓄，雖然初期較辛苦，但總利息支出較低，且不會面臨月付金暴增風險。</div>
+                        </div>
+                    </div>
+
+                    <!-- 負擔率診斷 -->
+                    <div :class="dtiCard.bgClass" class="rounded-xl p-4 flex gap-3 border" :style="dtiCard.borderStyle">
+                        <div class="mt-1 text-lg">{{ dtiCard.icon }}</div>
+                        <div>
+                            <div class="font-bold text-sm" :class="dtiCard.titleClass">房貸負擔率：{{ dtiPercent }}%</div>
+                            <div class="text-xs mt-1" :class="dtiCard.descClass">
+                                佔月薪 {{ monthlyIncome }} 萬的 {{ dtiPercent }}%。{{ dtiCard.desc }}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 視覺化圖表 -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4">月付金變化趨勢 (前 10 年)</h3>
-                    <div class="relative h-64 w-full">
-                        <canvas id="paymentChart"></canvas>
+                <!-- 各年度利率與攤還明細 -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-table-list text-primary"></i> 各年度利率與攤還明細表
+                    </h2>
+                    
+                    <div class="bg-slate-50 rounded-lg p-3 mb-4 text-xs text-slate-600 border border-slate-200">
+                        <strong>青安 3.0 補貼利率規則：</strong> 前3年 1.775% ｜ 第4年 1.900% ｜ 第5年 2.025% ｜ 第6年 2.150% ｜ 第7年起 2.275%
                     </div>
-                    <p class="text-xs text-slate-400 mt-4 text-center">依青安 3.0 補貼規則模擬：前3年補貼2碼，第4年起每年減少半碼補貼，至第7年恢復原利率。</p>
-                </div>
 
-                <!-- 總結資訊清單 -->
-                <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200">
-                    <h3 class="font-bold text-slate-700 mb-3">試算總覽</h3>
-                    <ul class="space-y-3 text-sm">
-                        <li class="flex justify-between border-b border-slate-200 pb-2">
-                            <span class="text-slate-500">房屋總價</span>
-                            <span class="font-bold text-slate-800">{{ formatWan(housePrice) }} 萬</span>
-                        </li>
-                        <li class="flex justify-between border-b border-slate-200 pb-2">
-                            <span class="text-slate-500">自備款 ({{ (downPayment/housePrice*100).toFixed(0) }}%)</span>
-                            <span class="font-bold text-slate-800">{{ formatWan(downPayment) }} 萬</span>
-                        </li>
-                        <li class="flex justify-between border-b border-slate-200 pb-2">
-                            <span class="text-slate-500">預估總利息</span>
-                            <span class="font-bold text-slate-800">{{ formatWan(totalInterest/10000) }} 萬</span>
-                        </li>
-                    </ul>
-                </div>
+                    <div class="overflow-x-auto max-h-[400px] border border-slate-200 rounded-lg">
+                        <table class="w-full text-sm text-left whitespace-nowrap">
+                            <thead class="text-xs text-slate-700 bg-slate-100 sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th class="px-4 py-3">年度</th>
+                                    <th class="px-4 py-3">年利率</th>
+                                    <th class="px-4 py-3 text-right">該年月付金</th>
+                                    <th class="px-4 py-3 text-right">全年本金還款</th>
+                                    <th class="px-4 py-3 text-right">全年利息支出</th>
+                                    <th class="px-4 py-3 text-right">年底剩餘本金</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="row in annualSchedule" :key="row.year" 
+                                    class="border-b border-slate-100 hover:bg-teal-50/50 transition"
+                                    :class="{'bg-yellow-50/30': row.isGrace, 'font-bold bg-red-50/30': row.year === graceYears + 1}">
+                                    <td class="px-4 py-2 flex items-center gap-2">
+                                        第 {{ row.year }} 年
+                                        <span v-if="row.isGrace" class="text-[10px] bg-yellow-100 text-yellow-700 px-1 rounded">寬限</span>
+                                        <span v-if="row.year === graceYears + 1" class="text-[10px] bg-red-100 text-red-600 px-1 rounded">跳升</span>
+                                    </td>
+                                    <td class="px-4 py-2">{{ (row.rate * 100).toFixed(3) }}%</td>
+                                    <td class="px-4 py-2 text-right font-bold text-slate-800">{{ formatMoney(row.monthlyPayment) }}</td>
+                                    <td class="px-4 py-2 text-right text-slate-600">{{ formatMoney(row.yearlyPrincipal) }}</td>
+                                    <td class="px-4 py-2 text-right text-slate-600">{{ formatMoney(row.yearlyInterest) }}</td>
+                                    <td class="px-4 py-2 text-right text-slate-500">{{ formatWanDetailed(row.endBalance) }} 萬</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                        <div class="bg-slate-50 p-3 rounded border text-center">
+                            <div class="text-slate-500 mb-1">預估總支付本息</div>
+                            <div class="font-black text-slate-800">{{ formatWanDetailed(actualLoan * 10000 + totalInterest) }} 萬</div>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded border text-center">
+                            <div class="text-slate-500 mb-1">預估總利息支出</div>
+                            <div class="font-black text-red-600">{{ formatWanDetailed(totalInterest) }} 萬</div>
+                        </div>
+                    </div>
 
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted, watch } = Vue
+        const { createApp, ref, computed, watch, onMounted } = Vue
 
         createApp({
             setup() {
-                // 輸入狀態 (單位：萬)
-                const housePrice = ref(1200)
-                const downPayment = ref(240)
+                // 資格檢查
+                const checkAge = ref(true)
+                const checkFirstTime = ref(true)
+                const checkIncome = ref(true)
+                const isEligible = computed(() => checkAge.value && checkFirstTime.value && checkIncome.value)
+
+                // 身份與額度設定
+                const familyTypes = [
+                    { id: 'general', name: '一般家庭', limit: 1000 },
+                    { id: 'newlywed', name: '結婚兩年內', limit: 1200 },
+                    { id: 'kids', name: '育有未成年子女', limit: 1500 }
+                ]
+                const familyStatus = ref('general')
+                const currentFamilyLimit = computed(() => familyTypes.find(t => t.id === familyStatus.value).limit)
+
+                // 金額輸入 (單位：萬)
+                const housePrice = ref(1500)
+                const appraisalValue = ref(1500)
+                const extraFees = ref(150)
+                const actualLoan = ref(1000)
                 const loanYears = ref(40)
                 const graceYears = ref(5)
-                const monthlyIncome = ref(8) // 8萬
+                const monthlyIncome = ref(10) // 10萬
 
-                // 圖表實例
-                let chartInstance = null;
+                // UI 狀態
+                const copySuccess = ref(false)
 
-                // 監聽總價改變，同步更新自備款比例 (預設保持2成)
-                watch(housePrice, (newVal) => {
-                    if (downPayment.value > newVal) {
-                        downPayment.value = newVal * 0.2;
+                // 最大貸款額度計算
+                // 規則：最高八成，且取「成交價」與「鑑價」較低者，且不超過家庭身份上限
+                const limitingFactor = ref('')
+                const maxLoanAmount = computed(() => {
+                    const priceBase = housePrice.value * 0.8;
+                    const appraisalBase = appraisalValue.value * 0.8;
+                    const limitBase = currentFamilyLimit.value;
+                    
+                    let minVal = Math.min(priceBase, appraisalBase, limitBase);
+                    
+                    if (minVal === limitBase) limitingFactor.value = '政策上限';
+                    else if (minVal === appraisalBase) limitingFactor.value = '鑑價八成';
+                    else limitingFactor.value = '總價八成';
+
+                    return Math.floor(minVal);
+                })
+
+                // 自動調整實際貸款金額
+                watch(maxLoanAmount, (newMax) => {
+                    if (actualLoan.value > newMax) {
+                        actualLoan.value = newMax;
                     }
-                });
+                })
 
-                // 計算屬性
-                const loanAmount = computed(() => housePrice.value - downPayment.value)
-                const downPaymentRatio = computed(() => downPayment.value / housePrice.value)
+                // 資金需求
+                const totalCashNeeded = computed(() => {
+                    return housePrice.value - actualLoan.value + extraFees.value;
+                })
 
-                const setDownPaymentRatio = (ratio) => {
-                    downPayment.value = Math.round(housePrice.value * ratio)
-                }
-
-                // 核心：青安 3.0 分段利率計算邏輯
+                // 計算每月/每年攤還明細
                 const calculateSchedule = () => {
-                    const principal = loanAmount.value * 10000;
+                    const principal = actualLoan.value * 10000;
                     const totalMonths = loanYears.value * 12;
                     const graceMonths = graceYears.value * 12;
                     
-                    // 青安 3.0 利率設定 (假設基準)
-                    const rates = [
-                        { start: 1, end: 36, rate: 0.01775 },    // 第 1-3 年
-                        { start: 37, end: 48, rate: 0.01900 },   // 第 4 年
-                        { start: 49, end: 60, rate: 0.02025 },   // 第 5 年
-                        { start: 61, end: 72, rate: 0.02150 },   // 第 6 年
-                        { start: 73, end: 9999, rate: 0.02275 }  // 第 7 年起
-                    ];
+                    // 青安 3.0 利率規則
+                    const getRateForMonth = (m) => {
+                        if (m <= 36) return 0.01775;
+                        if (m <= 48) return 0.01900;
+                        if (m <= 60) return 0.02025;
+                        if (m <= 72) return 0.02150;
+                        return 0.02275;
+                    };
 
                     let balance = principal;
-                    let schedule = [];
+                    let monthlyData = [];
                     let totalInterestAcc = 0;
 
                     for (let m = 1; m <= totalMonths; m++) {
-                        // 處理超過 1000 萬的部分 (簡化版：超過部分固定利率 2.185%)
-                        // 為了易懂，此處先以青安利率一體適用進行模擬展示，這也是大眾最常看到的估算方式
-                        
-                        let currentRateAnnual = rates.find(r => m >= r.start && m <= r.end).rate;
-                        let currentRateMonthly = currentRateAnnual / 12;
-                        let interest = balance * currentRateMonthly;
-                        let principalPayment = 0;
+                        let annualRate = getRateForMonth(m);
+                        let monthlyRate = annualRate / 12;
+                        let interest = balance * monthlyRate;
                         let payment = 0;
+                        let principalPayment = 0;
 
                         if (m <= graceMonths) {
-                            // 寬限期：只還利息
                             payment = interest;
                         } else {
-                            // 本息平均攤還 (PMT)
                             let remainingMonths = totalMonths - m + 1;
-                            // 避免除以0
-                            if(currentRateMonthly === 0) {
+                            if(monthlyRate === 0) {
                                 principalPayment = balance / remainingMonths;
                                 payment = principalPayment;
                             } else {
-                                payment = balance * (currentRateMonthly * Math.pow(1 + currentRateMonthly, remainingMonths)) / (Math.pow(1 + currentRateMonthly, remainingMonths) - 1);
+                                payment = balance * (monthlyRate * Math.pow(1 + monthlyRate, remainingMonths)) / (Math.pow(1 + monthlyRate, remainingMonths) - 1);
                                 principalPayment = payment - interest;
                             }
                             balance -= principalPayment;
                         }
                         
                         totalInterestAcc += interest;
-                        schedule.push({ 
-                            month: m, 
+                        monthlyData.push({
+                            month: m,
                             year: Math.ceil(m/12),
-                            payment: payment, 
-                            interest: interest, 
-                            principal: principalPayment 
+                            rate: annualRate,
+                            payment: payment,
+                            principal: principalPayment,
+                            interest: interest,
+                            balance: Math.max(0, balance)
                         });
                     }
 
-                    return { schedule, totalInterestAcc };
+                    // 轉換為年度摘要
+                    let annualSummary = [];
+                    for (let y = 1; y <= loanYears.value; y++) {
+                        let monthsInYear = monthlyData.filter(d => d.year === y);
+                        if (monthsInYear.length === 0) continue;
+                        
+                        let yearlyPrincipal = monthsInYear.reduce((sum, d) => sum + d.principal, 0);
+                        let yearlyInterest = monthsInYear.reduce((sum, d) => sum + d.interest, 0);
+                        // 取該年第一個月的月付金作為代表顯示
+                        let repMonthlyPayment = monthsInYear[0].payment;
+                        
+                        annualSummary.push({
+                            year: y,
+                            rate: monthsInYear[0].rate,
+                            isGrace: y <= graceYears.value,
+                            monthlyPayment: repMonthlyPayment,
+                            yearlyPrincipal: yearlyPrincipal,
+                            yearlyInterest: yearlyInterest,
+                            endBalance: monthsInYear[monthsInYear.length - 1].balance
+                        });
+                    }
+
+                    return { monthlyData, annualSummary, totalInterestAcc };
                 }
 
-                const scheduleData = computed(() => calculateSchedule())
-                const totalInterest = computed(() => scheduleData.value.totalInterestAcc)
-                
+                const scheduleResult = computed(() => calculateSchedule())
+                const annualSchedule = computed(() => scheduleResult.value.annualSummary)
+                const totalInterest = computed(() => scheduleResult.value.totalInterestAcc)
+
+                // 關鍵數字提取
                 const gracePayment = computed(() => {
                     if (graceYears.value == 0) return 0;
-                    return Math.round(scheduleData.value.schedule[0].payment);
+                    return annualSchedule.value[0]?.monthlyPayment || 0;
                 })
 
                 const maxMonthlyPayment = computed(() => {
-                    // 取寬限期後第一個月的月付，或是如果沒有寬限期就取第一個月
-                    const targetMonth = graceYears.value * 12;
-                    if(targetMonth >= scheduleData.value.schedule.length) return 0;
-                    return Math.round(scheduleData.value.schedule[targetMonth].payment);
+                    const targetYear = graceYears.value + 1;
+                    const row = annualSchedule.value.find(r => r.year === targetYear);
+                    return row ? row.monthlyPayment : (annualSchedule.value[0]?.monthlyPayment || 0);
                 })
 
-                // 收支比診斷
+                const paymentJumpAmount = computed(() => {
+                    if (graceYears.value == 0) return 0;
+                    return Math.max(0, maxMonthlyPayment.value - gracePayment.value);
+                })
+
+                // 收支比
                 const dtiPercent = computed(() => {
                     const income = monthlyIncome.value * 10000;
                     if(income === 0) return 100;
@@ -346,143 +482,64 @@
 
                 const dtiCard = computed(() => {
                     const ratio = dtiPercent.value;
-                    if (ratio <= 35) {
-                        return {
-                            icon: '😎',
-                            title: '負擔輕鬆',
-                            desc: '這個月付額對您目前的收入來說游刃有餘，可以安心看房！',
-                            bgClass: 'bg-green-50',
-                            titleClass: 'text-green-800',
-                            descClass: 'text-green-700',
-                            borderStyle: 'border-color: #bbf7d0;'
-                        }
+                    if (ratio <= 30) {
+                        return { icon: '😎', desc: '負擔輕鬆，可安心看房。', bgClass: 'bg-green-50', titleClass: 'text-green-800', descClass: 'text-green-700', borderStyle: 'border-color: #bbf7d0;' }
                     } else if (ratio <= 60) {
-                        return {
-                            icon: '🤔',
-                            title: '適中微緊',
-                            desc: '仍在可負擔範圍內，但建議預留緊急預備金，以防利率變動或突發支出。',
-                            bgClass: 'bg-yellow-50',
-                            titleClass: 'text-yellow-800',
-                            descClass: 'text-yellow-700',
-                            borderStyle: 'border-color: #fef08a;'
-                        }
+                        return { icon: '🤔', desc: '負擔適中，請預留緊急預備金。', bgClass: 'bg-yellow-50', titleClass: 'text-yellow-800', descClass: 'text-yellow-700', borderStyle: 'border-color: #fef08a;' }
                     } else {
-                        return {
-                            icon: '⚠️',
-                            title: '壓力警報',
-                            desc: '每月超過一半收入要繳房貸，建議提高自備款或拉長貸款年限，以免影響生活品質。',
-                            bgClass: 'bg-red-50',
-                            titleClass: 'text-red-800',
-                            descClass: 'text-red-700',
-                            borderStyle: 'border-color: #fecaca;'
-                        }
+                        return { icon: '⚠️', desc: '壓力極高！超過一半收入要繳房貸，建議提高頭期款或降預算。', bgClass: 'bg-red-50', titleClass: 'text-red-800', descClass: 'text-red-700', borderStyle: 'border-color: #fecaca;' }
                     }
                 })
 
-                // 工具函式
-                const formatWan = (num) => {
-                    return Number(num).toLocaleString('zh-TW');
-                }
-                const formatMoney = (num) => {
-                    return 'NT$ ' + Number(Math.round(num)).toLocaleString('zh-TW');
-                }
+                // 格式化工具
+                const formatWan = (num) => Number(num).toLocaleString('zh-TW');
+                const formatWanDetailed = (num) => (Number(num) / 10000).toLocaleString('zh-TW', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                const formatMoney = (num) => 'NT$ ' + Number(Math.round(num)).toLocaleString('zh-TW');
 
-                // 渲染圖表
-                const renderChart = () => {
-                    const ctx = document.getElementById('paymentChart').getContext('2d');
-                    
-                    // 萃取前 10 年的數據 (每年取一個月作為代表，例如該年第一個月)
-                    const yearsData = [];
-                    const maxDisplayYears = Math.min(10, loanYears.value);
-                    
-                    for(let i=1; i<=maxDisplayYears; i++) {
-                        // 找該年的第一個月的資料
-                        const monthData = scheduleData.value.schedule.find(s => s.year === i);
-                        if(monthData) {
-                            yearsData.push({
-                                year: `第 ${i} 年`,
-                                payment: monthData.payment,
-                                isGrace: i <= graceYears.value
-                            });
-                        }
-                    }
+                // 複製功能
+                const copyResults = () => {
+                    const text = `【青安 3.0 購屋試算結果】
+` +
+                        `🏡 房屋總價：${housePrice.value} 萬 (鑑價 ${appraisalValue.value} 萬)
+` +
+                        `👤 家庭身份：${familyTypes.find(t=>t.id===familyStatus.value).name}
+` +
+                        `💰 實際貸款：${actualLoan.value} 萬 (${loanYears.value}年, 寬限期${graceYears.value}年)
+` +
+                        `💵 總自備款需求：${totalCashNeeded.value} 萬 (含周邊費用 ${extraFees.value} 萬)
+` +
+                        `---
+` +
+                        (graceYears.value > 0 ? `🔹 寬限期月付：約 ${formatMoney(gracePayment.value)}
+` : '') +
+                        `🔴 寬限期後月付：約 ${formatMoney(maxMonthlyPayment.value)}
+` +
+                        `📊 房貸負擔率：${dtiPercent.value}% (以月收${monthlyIncome.value}萬計)
+` +
+                        `總利息支出預估：${formatWanDetailed(totalInterest.value)} 萬
+` +
+                        `*依行政院青安3.0規定模擬，實際依銀行核准為準。`;
 
-                    const labels = yearsData.map(d => d.year);
-                    const dataPoints = yearsData.map(d => Math.round(d.payment));
-                    const backgroundColors = yearsData.map(d => d.isGrace ? 'rgba(13, 148, 136, 0.4)' : 'rgba(13, 148, 136, 0.9)');
-
-                    if (chartInstance) {
-                        chartInstance.destroy();
-                    }
-
-                    chartInstance = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: '每月應繳金額',
-                                data: dataPoints,
-                                backgroundColor: backgroundColors,
-                                borderRadius: 6,
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return 'NT$ ' + context.raw.toLocaleString('zh-TW');
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { borderDash: [2, 4], color: '#e2e8f0' },
-                                    ticks: {
-                                        callback: function(value) {
-                                            return value >= 10000 ? (value/10000) + '萬' : value;
-                                        }
-                                    }
-                                },
-                                x: {
-                                    grid: { display: false }
-                                }
-                            }
-                        }
+                    navigator.clipboard.writeText(text).then(() => {
+                        copySuccess.value = true;
+                        setTimeout(() => { copySuccess.value = false; }, 2000);
                     });
                 }
 
-                // 監聽變數改變，重繪圖表
-                watch([housePrice, downPayment, loanYears, graceYears], () => {
-                    // 使用 setTimeout 確保 DOM 渲染完成後再更新圖表
-                    setTimeout(renderChart, 50);
-                });
-
+                // 初始化設定
                 onMounted(() => {
-                    renderChart();
-                });
+                    actualLoan.value = maxLoanAmount.value;
+                })
 
                 return {
-                    housePrice,
-                    downPayment,
-                    loanYears,
-                    graceYears,
-                    monthlyIncome,
-                    loanAmount,
-                    downPaymentRatio,
-                    setDownPaymentRatio,
-                    maxMonthlyPayment,
-                    gracePayment,
-                    totalInterest,
-                    dtiPercent,
-                    dtiCard,
-                    formatWan,
-                    formatMoney
+                    checkAge, checkFirstTime, checkIncome, isEligible,
+                    familyTypes, familyStatus, currentFamilyLimit,
+                    housePrice, appraisalValue, extraFees, actualLoan, maxLoanAmount, limitingFactor, totalCashNeeded,
+                    loanYears, graceYears, monthlyIncome,
+                    annualSchedule, totalInterest, gracePayment, maxMonthlyPayment, paymentJumpAmount,
+                    dtiPercent, dtiCard,
+                    formatWan, formatWanDetailed, formatMoney,
+                    copyResults, copySuccess
                 }
             }
         }).mount('#app')
