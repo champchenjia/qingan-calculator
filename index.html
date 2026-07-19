@@ -45,7 +45,7 @@
         <!-- Header -->
         <header class="mb-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-200 pb-6">
             <div class="flex flex-col md:flex-row items-center gap-4">
-                <img src="logo.png" alt="宸品團隊 Logo" class="h-16 w-auto object-contain drop-shadow-md bg-black rounded-lg p-1">
+                <img src="logo.png" alt="宸品團隊 Logo" class="h-24 md:h-28 w-auto object-contain drop-shadow-lg">
                 <div>
                     <div class="flex items-center justify-center md:justify-start gap-3 mb-2">
                         <span class="bg-primary text-white text-xs font-bold px-2 py-1 rounded">2026 最新版</span>
@@ -575,10 +575,9 @@
 
     <!-- 浮動聯絡資訊卡 (含動態人物) -->
     <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end group">
-        <!-- 動態人物影片區塊 -->
-        <a href="tel:0966668950" class="relative w-28 h-28 -mb-4 mr-4 rounded-full border-4 border-white shadow-xl overflow-hidden bg-amber-50 z-10 transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-2 origin-bottom block">
-            <!-- playsinline 確保在手機上不會自動全螢幕，muted 和 autoplay 是網頁自動循環播放的必要條件 -->
-            <video class="w-full h-full object-cover" autoplay loop muted playsinline>
+        <!-- 動態人物影片區塊 (去背浮動效果) -->
+        <a href="tel:0966668950" class="relative w-36 h-36 -mb-6 mr-2 z-10 transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-2 origin-bottom block" style="mix-blend-mode: multiply;">
+            <video class="w-full h-full object-contain" autoplay loop muted playsinline>
                 <source src="aga_dynamic.mp4" type="video/mp4">
             </video>
         </a>
